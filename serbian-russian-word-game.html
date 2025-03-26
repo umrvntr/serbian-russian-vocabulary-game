@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Словарный тест: Сербский и Русский</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .quiz-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 95%;
+            max-width: 700px;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 26px;
+            margin-bottom: 20px;
+        }
+        #word {
+            font-size: 32px;
+            color: #e74c3c;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        #context {
+            font-size: 18px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        .input-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+        #input-answer {
+            width: 70%;
+            padding: 12px;
+            font-size: 18px;
+            border: 2px solid #3498db;
+            border-radius: 6px;
+            margin-right: 10px;
+        }
+        #check-btn {
+            padding: 12px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #check-btn:hover {
+            background-color: #2980b9;
+        }
+        #response {
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #progress {
+            font-size: 16px;
+            color: #7f8c8d;
+        }
+        .mode-container {
+            margin-bottom: 20px;
+        }
+        #mode-select {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+        }
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            font-size: 16px;
+            color: #7f8c8d;
+        }
+        .restart-container {
+            margin-top: 20px;
+        }
+        #restart-btn {
+            padding: 12px 20px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        #restart-btn:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1>Словарный тест: Сербский и Русский</h1>
+        <div class="mode-container">
+            <select id="mode-select">
+                <option value="serbian-to-russian">Сербский → Русский</option>
+                <option value="russian-to-serbian">Русский → Сербский</option>
+            </select>
+        </div>
+        <div id="word"></div>
+        <div id="context"></div>
+        <div class="input-container">
+            <input type="text" id="input-answer" placeholder="Введите перевод">
+            <button id="check-btn">Проверить</button>
+        </div>
+        <div id="response"></div>
+        <div class="stats-container">
+            <div id="progress"></div>
+            <div id="timer"></div>
+        </div>
+        <div id="end-game-container" style="display: none;">
+            <div class="restart-container">
+                <button id="restart-btn">Начать сначала</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const wordList = [
+            { serbian: "Onda", russian: "Тогда", context: "Onda doćiću sutra", contextTranslation: "Тогда я приду завтра" },
+            { serbian: "Uprkos", russian: "Вопреки", context: "Uprkos svemu mi smo dobili", contextTranslation: "Вопреки всему, мы получили" },
+            { serbian: "Izgleda", russian: "Кажется", context: "Izgleda da sam zakasnila…", contextTranslation: "Кажется, я опоздала..." },
+            { serbian: "Osim", russian: "Кроме", context: "Jedem sve osim mesa", contextTranslation: "Я ем всё, кроме мяса" },
+            { serbian: "Zajedno", russian: "Вместе", context: "Mi smo zajedno.", contextTranslation: "Мы вместе." },
+            { serbian: "Neka", russian: "Пусть", context: "Neka vam je sa srećom!", contextTranslation: "Пусть вам будет счастье!" },
+            { serbian: "Posle", russian: "После", context: "Idemo u bioskop posle posla", contextTranslation: "Идем в кино после работы" },
+            { serbian: "Kasnije", russian: "После", context: "Razgovaraćemo kasneje", contextTranslation: "Поговорим позже" },
+            { serbian: "Početak", russian: "Начало", context: "Šta je u početku?", contextTranslation: "Что в начале?" },
+            { serbian: "Trenutno", russian: "Сейчас, В сей момент", context: "Trenutno sam zauzet", contextTranslation: "Сейчас я занят" },
+            { serbian: "Odmah", russian: "Сразу", context: "Odmah sam zaboravila.", contextTranslation: "Сразу забыла." },
+            { serbian: "Sada", russian: "Сейчас", context: "Gde si sada?", contextTranslation: "Где ты сейчас?" },
+            { serbian: "U toku dana", russian: "В течение дня", context: "Nazvaću te u toku dana", contextTranslation: "Позвоню тебе в течение дня" },
+            { serbian: "Skoro", russian: "Почти", context: "Skoro je leto", contextTranslation: "Почти лето" },
+            { serbian: "Bar", russian: "Хотя бы", context: "Treba mi bar malo pare", contextTranslation: "Мне нужно хотя бы немного денег" },
+            { serbian: "Već", russian: "Уже", context: "Već godinu dana živim u Srbiji", contextTranslation: "Уже год живу в Сербии" },
+            { serbian: "Ponekad", russian: "Иногда", context: "Ponekad mi nedostaje Sankt Peterburg", contextTranslation: "Иногда мне не хватает Санкт-Петербурга" },
+            { serbian: "Čak", russian: "Даже", context: "Film je čak i bolji nego što sam očekivao", contextTranslation: "Фильм даже лучше, чем я ожидал" },
+            { serbian: "Jako", russian: "Очень", context: "Film je bio baš super!", contextTranslation: "Фильм был просто супер!" },
+            { serbian: "Hitno", russian: "Срочно", context: "Pozovi me hitno!", contextTranslation: "Позвони мне срочно!" },
+            { serbian: "Stalno", russian: "Постоянно", context: "Stalno pada kiša", contextTranslation: "Постоянно идёт дождь" },
+            { serbian: "Ipak", russian: "Всё-таки", context: "Zima je ipak gotova.", contextTranslation: "Зима всё-таки закончилась." },
+            { serbian: "Drugačije", russian: "В ином случае", context: "Drugačije ćeš umreti", contextTranslation: "В ином случае ты умрёшь" },
+            { serbian: "Obrnuto", russian: "Наоборот", context: "Sve si uradio obrnuto", contextTranslation: "Всё сделал наоборот" },
+            { serbian: "Prvo", russian: "Сначала", context: "Prvo treba da popijete kafu", contextTranslation: "Сначала нужно выпить кофе" },
+            { serbian: "Posebno", russian: "Особенно", context: "Posebno volim kašu", contextTranslation: "Особенно люблю кашу" },
+            { serbian: "Inače / Usput", russian: "Кстати", context: "Usput, ti si budala!", contextTranslation: "Кстати, ты дурак!" },
+            { serbian: "Odvojeno", russian: "Отдельно", context: "Da naručimo svaki odvojeno", contextTranslation: "Давайте закажем каждый отдельно" },
+            { serbian: "Neočekivano", russian: "Неожиданно", context: "Neočekivano nastaje proljeće", contextTranslation: "Неожиданно наступает весна" },
+            { serbian: "Jeftino", russian: "Дёшево", context: "Ovo meso je jeftino", contextTranslation: "Это мясо дёшево" },
+            { serbian: "Dok", russian: "Пока", context: "Dok si ti spavao, ja sam ručala", contextTranslation: "Пока ты спал, я пообедала" }
+        ];
+
+        let originalWordList = [...wordList];
+        let wordsLeft = [];
+        let currentWord = null;
+        let correctCount = 0;
+        let totalCount = 0;
+        let currentMode = 'serbian-to-russian';
+        let startTime = null;
+        let timerId = null;
+
+        const modeSelect = document.getElementById('mode-select');
+        const wordDisplay = document.getElementById('word');
+        const contextDisplay = document.getElementById('context');
+        const inputAnswer = document.getElementById('input-answer');
+        const checkBtn = document.getElementById('check-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const responseDisplay = document.getElementById('response');
+        const progressDisplay = document.getElementById('progress');
+        const timerDisplay = document.getElementById('timer');
+        const endGameContainer = document.getElementById('end-game-container');
+
+        function normalizeText(text) {
+            // Убираем надстрочные знаки с сербских букв
+            text = text.toLowerCase()
+                .replace(/[ć]/g, 'c')
+                .replace(/[č]/g, 'c')
+                .replace(/[ž]/g, 'z')
+                .replace(/[š]/g, 's')
+                .replace(/[đ]/g, 'd')
+                
+                // Заменяем е на ё
+                .replace(/е/g, 'ё')
+                
+                // Убираем диакритические знаки
+                .replace(/[àáâãäå]/g, 'а')
+                .replace(/[èéêë]/g, 'е')
+                .replace(/[ìíîï]/g, 'и')
+                .replace(/[òóôõö]/g, 'о')
+                .replace(/[ùúûü]/g, 'у');
+            
+            return text;
+        }
+
+        function resetTest() {
+            wordsLeft = [...originalWordList];
+            correctCount = 0;
+            totalCount = 0;
+            startTime = new Date();
+            endGameContainer.style.display = 'none';
+            inputAnswer.disabled = false;
+            checkBtn.disabled = false;
+            updateProgress();
+            updateTimer();
+            loadWord();
+            
+            // Запускаем таймер
+            timerId = setInterval(updateTimer, 1000);
+        }
+
+        function loadWord() {
+            if (wordsLeft.length === 0) {
+                endTest();
+                return;
+            }
+
+            const idx = Math.floor(Math.random() * wordsLeft.length);
+            currentWord = wordsLeft[idx];
+            
+            if (currentMode === 'serbian-to-russian') {
+                wordDisplay.textContent = currentWord.serbian;
+                contextDisplay.textContent = currentWord.context;
+            } else {
+                wordDisplay.textContent = currentWord.russian;
+                contextDisplay.textContent = currentWord.contextTranslation;
+            }
+            
+            inputAnswer.value = '';
+            responseDisplay.textContent = '';
+            wordsLeft.splice(idx, 1);
+        }
+
+        function checkResponse() {
+            const answer = normalizeText(inputAnswer.value.trim());
+            const correctAnswer = normalizeText(
+                currentMode === 'serbian-to-russian' 
+                    ? currentWord.russian 
+                    : currentWord.serbian
+            );
+            
+            totalCount++;
+
+            if (answer === correctAnswer) {
+                responseDisplay.textContent = "Правильно! 👍";
+                responseDisplay.style.color = "#2ecc71";
+                correctCount++;
+            } else {
+                responseDisplay.textContent = 
+                    `Неверно! Правильный ответ: ${
+                        currentMode === 'serbian-to-russian' 
+                            ? currentWord.russian 
+                            : currentWord.serbian
+                    }`;
+                responseDisplay.style.color = "#e74c3c";
+            }
+
+            updateProgress();
+            setTimeout(loadWord, 1500);
+        }
+
+        function updateProgress() {
+            const accuracy = totalCount > 0 ? (correctCount / totalCount * 100).toFixed(1) : 0;
+            progressDisplay.textContent = 
+                `Прогресс: ${correctCount}/${totalCount} (${accuracy}%)`;
+        }
+
+        function updateTimer() {
+            if (!startTime) return;
+            
+            const currentTime = new Date();
+            const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            
+            timerDisplay.textContent = `Время: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function endTest() {
+            clearInterval(timerId);
+            wordDisplay.textContent = "Тест окончен!";
+            contextDisplay.textContent = `Вы правильно ответили на ${correctCount} из ${totalCount} слов`;
+            inputAnswer.disabled = true;
+            checkBtn.disabled = true;
+            endGameContainer.style.display = 'block';
+        }
+
+        // Обработчики событий
+        modeSelect.addEventListener('change', (e) => {
+            currentMode = e.target.value;
+            resetTest();
+        });
+
+        checkBtn.addEventListener('click', checkResponse);
+        restartBtn.addEventListener('click', resetTest);
+
+        inputAnswer.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkResponse();
+        });
+
+        // Инициализация
+        window.onload = () => {
+            modeSelect.value = currentMode;
+            resetTest();
+        };
+    </script>
+</body>
+</html>
